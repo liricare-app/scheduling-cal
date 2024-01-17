@@ -129,13 +129,18 @@ const BookerComponent = ({
   if (nonEmptyScheduleDays.length !== 0)
     columnViewExtraDays.current =
       Math.abs(dayjs(selectedDate).diff(availableSlots[availableSlots.length - 2], "day")) + addonDays;
+
   const prefetchNextMonth =
+    !process.env.BOOKER_DISALLOW_PREFETCH_NEXT_MONTH &&
     layout === BookerLayouts.COLUMN_VIEW &&
     dayjs(date).month() !== dayjs(date).add(columnViewExtraDays.current, "day").month();
+
   const monthCount =
-    dayjs(date).add(1, "month").month() !== dayjs(date).add(columnViewExtraDays.current, "day").month()
+    dayjs(date).add(1, "month").month() !== dayjs(date).add(columnViewExtraDays.current, "day").month() &&
+    !process.env.BOOKER_DISALLOW_PREFETCH_NEXT_MONTH
       ? 2
       : undefined;
+
   const nextSlots =
     Math.abs(dayjs(selectedDate).diff(availableSlots[availableSlots.length - 1], "day")) + addonDays;
 
