@@ -52,6 +52,7 @@ export async function getUserFromSession(ctx: TRPCContextInner, session: Maybe<S
       brandColor: true,
       darkBrandColor: true,
       away: true,
+      movedToProfileId: true,
       selectedCalendars: {
         select: {
           externalId: true,
@@ -88,7 +89,6 @@ export async function getUserFromSession(ctx: TRPCContextInner, session: Maybe<S
     upId,
   });
 
-  logger.debug("getUserFromSession-Result", { user: user.id, profile: user.profile, session });
   const { email, username, id } = user;
   if (!email || !id) {
     return null;

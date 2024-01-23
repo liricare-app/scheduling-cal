@@ -50,7 +50,11 @@ export function TeamsListing() {
   });
 
   const teams = useMemo(() => data?.filter((m) => m.accepted && !m.metadata?.isOrganization) || [], [data]);
-  const invites = useMemo(() => data?.filter((m) => !m.accepted) || [], [data]);
+  const invites = useMemo(
+    () => data?.filter((m) => !m.accepted && !m.metadata?.isOrganization) || [],
+    [data]
+  );
+  const organizationInvites = data?.filter((m) => !m.accepted && m.metadata?.isOrganization) || [];
 
   const isCreateTeamButtonDisabled = !!(user?.organizationId && !user?.organization?.isOrgAdmin);
 
@@ -101,12 +105,20 @@ export function TeamsListing() {
     <>
       {!!errorMessage && <Alert severity="error" title={errorMessage} />}
 
+      {organizationInvites.length > 0 && (
+        <div className="bg-subtle mb-6 rounded-md p-5">
+          <Label className="text-emphasis pb-2  font-semibold">{t("pending_organization_invites")}</Label>
+          <TeamList teams={organizationInvites} pending />
+        </div>
+      )}
+
       {invites.length > 0 && (
         <div className="bg-subtle mb-6 rounded-md p-5">
           <Label className="text-emphasis pb-2  font-semibold">{t("pending_invites")}</Label>
           <TeamList teams={invites} pending />
         </div>
       )}
+
       <UpgradeTip
         plan="team"
         title={t("calcom_is_better_with_team", { appName: APP_NAME })}

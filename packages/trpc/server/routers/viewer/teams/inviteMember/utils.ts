@@ -1,8 +1,8 @@
 import { randomBytes } from "crypto";
 import type { TFunction } from "next-i18next";
 
-import { sendTeamInviteEmail, sendOrganizationAutoJoinEmail } from "@calcom/emails";
-import { WEBAPP_URL } from "@calcom/lib/constants";
+import { sendTeamInviteEmail } from "@calcom/emails";
+import { ENABLE_PROFILE_SWITCHER, WEBAPP_URL } from "@calcom/lib/constants";
 import logger from "@calcom/lib/logger";
 import { safeStringify } from "@calcom/lib/safeStringify";
 import { isTeamAdmin } from "@calcom/lib/server/queries";
@@ -118,12 +118,15 @@ export function validateInviteeEligibility(invitee: UserWithMembership, team: Te
   }
 
   // user is invited to join a team in an organization where he isn't a member
-  // if (invitee.profiles.find((profile) => profile.organizationId != team.parentId)) {
-  //   throw new TRPCError({
-  //     code: "FORBIDDEN",
-  //     message: `User ${invitee.username} is already a member of another organization.`,
-  //   });
-  // }
+  if (
+    !ENABLE_PROFILE_SWITCHER &&
+    invitee.profiles.find((profile) => profile.organizationId != team.parentId)
+  ) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: `User ${invitee.username} is already a member of another organization.`,
+    });
+  }
 }
 
 export async function getUsersToInvite({
@@ -343,13 +346,12 @@ export async function createProvisionalMemberships({
   }
 }
 
-export async function sendVerificationEmail({
+export async function sendSignupToOrganizationEmail({
   usernameOrEmail,
   team,
   translation,
   ctx,
   input,
-  connectionInfo,
 }: {
   usernameOrEmail: string;
   team: Awaited<ReturnType<typeof getTeamOrThrow>>;
@@ -362,7 +364,6 @@ export async function sendVerificationEmail({
     language: string;
     isOrg: boolean;
   };
-  connectionInfo: ReturnType<typeof getOrgConnectionInfo>;
 }) {
   const token: string = randomBytes(32).toString("hex");
 
@@ -378,26 +379,16 @@ export async function sendVerificationEmail({
       },
     },
   });
-  if (!connectionInfo.autoAccept) {
-    await sendTeamInviteEmail({
-      language: translation,
-      from: ctx.user.name || `${team.name}'s admin`,
-      to: usernameOrEmail,
-      teamName: team.name,
-      joinLink: `${WEBAPP_URL}/signup?token=${token}&callbackUrl=/getting-started`,
-      isCalcomMember: false,
-      isOrg: input.isOrg,
-      parentTeamName: team?.parent?.name,
-    });
-  } else {
-    await sendOrganizationAutoJoinEmail({
-      language: translation,
-      from: ctx.user.name || `${team.name}'s admin`,
-      to: usernameOrEmail,
-      orgName: team?.parent?.name || team.name,
-      joinLink: `${WEBAPP_URL}/signup?token=${token}&callbackUrl=/getting-started`,
-    });
-  }
+  await sendTeamInviteEmail({
+    language: translation,
+    from: ctx.user.name || `${team.name}'s admin`,
+    to: usernameOrEmail,
+    teamName: team.name,
+    joinLink: `${WEBAPP_URL}/signup?token=${token}&callbackUrl=/getting-started`,
+    isCalcomMember: false,
+    isOrg: input.isOrg,
+    parentTeamName: team?.parent?.name,
+  });
 }
 
 export function getIsOrgVerified(
@@ -454,6 +445,7 @@ export function shouldAutoJoinIfInOrg({
 
   return true;
 }
+
 // split invited users between ones that can autojoin and the others who cannot autojoin
 export const groupUsersByJoinability = ({
   existingUsersWithMembersips,

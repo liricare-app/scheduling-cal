@@ -20,7 +20,7 @@ import {
   getUsernameOrEmailsToInvite,
   getOrgConnectionInfo,
   getIsOrgVerified,
-  sendVerificationEmail,
+  sendSignupToOrganizationEmail,
   getUsersToInvite,
   createNewUsersConnectToOrgIfExists,
   createProvisionalMemberships,
@@ -113,13 +113,12 @@ export const inviteMemberHandler = async ({ ctx, input }: InviteMemberOptions) =
       parentId: team.parentId,
     });
     const sendVerifEmailsPromises = newUsersEmailsOrUsernames.map((usernameOrEmail) => {
-      return sendVerificationEmail({
+      return sendSignupToOrganizationEmail({
         usernameOrEmail,
         team,
         translation,
         ctx,
         input,
-        connectionInfo: orgConnectInfoByUsernameOrEmail[usernameOrEmail],
       });
     });
     sendEmails(sendVerifEmailsPromises);
@@ -132,6 +131,14 @@ export const inviteMemberHandler = async ({ ctx, input }: InviteMemberOptions) =
         existingUsersWithMembersips,
         team,
       });
+
+      log.debug(
+        "Inviting existing users to a team",
+        safeStringify({
+          autoJoinUsers,
+          regularUsers,
+        })
+      );
 
       // invited users can autojoin, create their memberships in org
       if (autoJoinUsers.length) {
