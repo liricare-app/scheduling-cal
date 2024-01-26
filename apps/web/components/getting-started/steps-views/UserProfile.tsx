@@ -85,15 +85,14 @@ const UserProfile = () => {
       length: 15,
     },
     {
-      title: t("30min_meeting"),
-      slug: "30min",
-      length: 30,
+      title: t("45min_meeting"),
+      slug: "45min",
+      length: 45,
     },
     {
-      title: t("secret_meeting"),
-      slug: "secret",
-      length: 15,
-      hidden: true,
+      title: t("60min_meeting"),
+      slug: "60min",
+      length: 60,
     },
   ];
 
