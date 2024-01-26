@@ -10,7 +10,14 @@ import { useBootIntercom } from "@calcom/features/ee/support/lib/intercom/useInt
 import { KBarContent, KBarRoot } from "@calcom/features/kbar/Kbar";
 import TimezoneChangeDialog from "@calcom/features/settings/TimezoneChangeDialog";
 import classNames from "@calcom/lib/classNames";
-import { APP_NAME } from "@calcom/lib/constants";
+import {
+  APP_NAME,
+  ENABLE_PROFILE_SWITCHER,
+  IS_VISUAL_REGRESSION_TESTING,
+  TOP_BANNER_HEIGHT,
+  WEBAPP_URL,
+} from "@calcom/lib/constants";
+import { getPlaceholderAvatar } from "@calcom/lib/defaultAvatarImage";
 import { useFormbricks } from "@calcom/lib/formbricks-client";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { useNotifications } from "@calcom/lib/hooks/useNotifications";
