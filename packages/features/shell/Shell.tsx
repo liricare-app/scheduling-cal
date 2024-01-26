@@ -40,11 +40,8 @@ import VerifyEmailBanner, {
 import classNames from "@calcom/lib/classNames";
 import {
   APP_NAME,
-  DESKTOP_APP_LINK,
   ENABLE_PROFILE_SWITCHER,
   IS_VISUAL_REGRESSION_TESTING,
-  JOIN_DISCORD,
-  ROADMAP,
   TOP_BANNER_HEIGHT,
   WEBAPP_URL,
 } from "@calcom/lib/constants";
