@@ -318,6 +318,7 @@ function UserDropdown({ small }: UserDropdownProps) {
                     <DropdownMenuSeparator />
                   </>
                 )}
+
                 <DropdownMenuItem>
                   <DropdownItem
                     type="button"
@@ -327,18 +328,6 @@ function UserDropdown({ small }: UserDropdownProps) {
                     {t("help")}
                   </DropdownItem>
                 </DropdownMenuItem>
-                {!isPlatformUser && (
-                  <DropdownMenuItem className="todesktop:hidden hidden lg:flex">
-                    <DropdownItem
-                      StartIcon="download"
-                      target="_blank"
-                      rel="noreferrer"
-                      href={DESKTOP_APP_LINK}>
-                      {t("download_desktop_app")}
-                    </DropdownItem>
-                  </DropdownMenuItem>
-                )}
-
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem>
