@@ -318,12 +318,6 @@ function UserDropdown({ small }: UserDropdownProps) {
                     <DropdownMenuSeparator />
                   </>
                 )}
-
-                <DropdownMenuItem>
-                  <DropdownItem StartIcon="map" target="_blank" href={ROADMAP}>
-                    {t("visit_roadmap")}
-                  </DropdownItem>
-                </DropdownMenuItem>
                 <DropdownMenuItem>
                   <DropdownItem
                     type="button"
