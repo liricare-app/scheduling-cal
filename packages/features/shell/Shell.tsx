@@ -79,7 +79,6 @@ import {
   useCalcomTheme,
   type IconName,
 } from "@calcom/ui";
-import { Discord } from "@calcom/ui/components/icon/Discord";
 import { useGetUserAttributes } from "@calcom/web/components/settings/platform/hooks/useGetUserAttributes";
 
 import { useOrgBranding } from "../ee/organizations/context/provider";
@@ -502,15 +501,6 @@ function UserDropdown({ small }: UserDropdownProps) {
                   </>
                 )}
 
-                <DropdownMenuItem>
-                  <DropdownItem
-                    CustomStartIcon={<Discord className="text-default h-4 w-4" />}
-                    target="_blank"
-                    rel="noreferrer"
-                    href={JOIN_DISCORD}>
-                    {t("join_our_discord")}
-                  </DropdownItem>
-                </DropdownMenuItem>
                 <DropdownMenuItem>
                   <DropdownItem StartIcon="map" target="_blank" href={ROADMAP}>
                     {t("visit_roadmap")}
