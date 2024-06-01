@@ -6,6 +6,7 @@ import * as imports from "../../zod-utils";
 
 export const createEventTypeInput = z.object({
   title: z.string().min(1),
+  price: z.number().int(),
   slug: imports.eventTypeSlug,
   description: z.string().nullish(),
   length: z.number().int(),

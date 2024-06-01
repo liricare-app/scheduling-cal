@@ -258,6 +258,21 @@ export default function CreateEventTypeDialog({
                     addOnSuffix={t("minutes")}
                   />
                 </div>
+
+                <div className="relative">
+                  <TextField
+                    type="number"
+                    required
+                    min="0"
+                    placeholder="$100"
+                    label="Price"
+                    className="pr-4"
+                    {...register("price", { valueAsNumber: true })}
+                    onChange={(e) => {
+                      form.setValue("price", parseInt(e?.target.value, 10));
+                    }}
+                  />
+                </div>
               </>
             )}
 
