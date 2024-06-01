@@ -129,34 +129,173 @@ export default function CreateEventTypeDialog({
         enableOverflow
         title={teamId ? t("add_new_team_event_type") : t("add_new_event_type")}
         description={t("new_event_type_to_book_description")}>
-        {teamId ? (
-          <TeamEventTypeForm
-            teamSlug={team?.slug}
-            teamId={teamId}
-            isTeamAdminOrOwner={isTeamAdminOrOwner}
-            urlPrefix={urlPrefix}
-            isPending={createMutation.isPending}
-            form={form}
-            isManagedEventType={isManagedEventType}
-            handleSubmit={(values) => {
-              postHog.capture("Event Created Frontend");
-              createMutation.mutate(values);
-            }}
-            SubmitButton={SubmitButton}
-          />
-        ) : (
-          <CreateEventTypeForm
-            urlPrefix={urlPrefix}
-            isPending={createMutation.isPending}
-            form={form}
-            isManagedEventType={isManagedEventType}
-            handleSubmit={(values) => {
-              createMutation.mutate(values);
-            }}
-            SubmitButton={SubmitButton}
-            pageSlug={pageSlug}
-          />
-        )}
+        <Form
+          form={form}
+          handleSubmit={(values) => {
+            createMutation.mutate(values);
+          }}>
+          <div className="mt-3 space-y-6 pb-11">
+            {teamId && (
+              <TextField
+                type="hidden"
+                labelProps={{ style: { display: "none" } }}
+                {...register("teamId", { valueAsNumber: true })}
+                value={teamId}
+              />
+            )}
+            <TextField
+              label={t("title")}
+              placeholder={t("quick_chat")}
+              data-testid="event-type-quick-chat"
+              {...register("title")}
+              onChange={(e) => {
+                form.setValue("title", e?.target.value);
+                if (form.formState.touchedFields["slug"] === undefined) {
+                  form.setValue("slug", slugify(e?.target.value));
+                }
+              }}
+            />
+
+            {urlPrefix && urlPrefix.length >= 21 ? (
+              <div>
+                <TextField
+                  label={`${t("url")}: ${urlPrefix}`}
+                  required
+                  addOnLeading={
+                    <Tooltip content={!isManagedEventType ? pageSlug : t("username_placeholder")}>
+                      <span className="max-w-24 md:max-w-56">
+                        /{!isManagedEventType ? pageSlug : t("username_placeholder")}/
+                      </span>
+                    </Tooltip>
+                  }
+                  {...register("slug")}
+                  onChange={(e) => {
+                    form.setValue("slug", slugify(e?.target.value), { shouldTouch: true });
+                  }}
+                />
+
+                {isManagedEventType && (
+                  <p className="mt-2 text-sm text-gray-600">{t("managed_event_url_clarification")}</p>
+                )}
+              </div>
+            ) : (
+              <div>
+                <TextField
+                  label={t("url")}
+                  required
+                  addOnLeading={
+                    <Tooltip
+                      content={`${urlPrefix}/${!isManagedEventType ? pageSlug : t("username_placeholder")}/`}>
+                      <span className="max-w-24 md:max-w-56">
+                        {urlPrefix}/{!isManagedEventType ? pageSlug : t("username_placeholder")}/
+                      </span>
+                    </Tooltip>
+                  }
+                  {...register("slug")}
+                />
+                {isManagedEventType && (
+                  <p className="mt-2 text-sm text-gray-600">{t("managed_event_url_clarification")}</p>
+                )}
+              </div>
+            )}
+            {!teamId && (
+              <>
+                <Editor
+                  getText={() => md.render(form.getValues("description") || "")}
+                  setText={(value: string) => form.setValue("description", turndown(value))}
+                  excludedToolbarItems={["blockType", "link"]}
+                  placeholder={t("quick_video_meeting")}
+                  firstRender={firstRender}
+                  setFirstRender={setFirstRender}
+                />
+
+                <div className="relative">
+                  <TextField
+                    type="number"
+                    required
+                    min="10"
+                    placeholder="15"
+                    label={t("duration")}
+                    className="pr-4"
+                    {...register("length", { valueAsNumber: true })}
+                    addOnSuffix={t("minutes")}
+                  />
+                </div>
+
+                <div className="relative">
+                  <TextField
+                    type="number"
+                    required
+                    min="0"
+                    placeholder="$100"
+                    label="Price"
+                    className="pr-4"
+                    {...register("price", { valueAsNumber: true })}
+                    onChange={(e) => {
+                      form.setValue("price", parseInt(e?.target.value, 10));
+                    }}
+                  />
+                </div>
+              </>
+            )}
+
+            {teamId && (
+              <div className="mb-4">
+                <label htmlFor="schedulingType" className="text-default block text-sm font-bold">
+                  {t("assignment")}
+                </label>
+                {form.formState.errors.schedulingType && (
+                  <Alert
+                    className="mt-1"
+                    severity="error"
+                    message={form.formState.errors.schedulingType.message}
+                  />
+                )}
+                <RadioArea.Group
+                  onValueChange={(val: SchedulingType) => {
+                    form.setValue("schedulingType", val);
+                  }}
+                  className={classNames("mt-1 flex gap-4", isAdmin && "flex-col")}>
+                  <RadioArea.Item
+                    {...register("schedulingType")}
+                    value={SchedulingType.COLLECTIVE}
+                    className={classNames("w-full text-sm", !isAdmin && "w-1/2")}
+                    classNames={{ container: classNames(isAdmin && "w-full") }}>
+                    <strong className="mb-1 block">{t("collective")}</strong>
+                    <p>{t("collective_description")}</p>
+                  </RadioArea.Item>
+                  <RadioArea.Item
+                    {...register("schedulingType")}
+                    value={SchedulingType.ROUND_ROBIN}
+                    className={classNames("text-sm", !isAdmin && "w-1/2")}
+                    classNames={{ container: classNames(isAdmin && "w-full") }}>
+                    <strong className="mb-1 block">{t("round_robin")}</strong>
+                    <p>{t("round_robin_description")}</p>
+                  </RadioArea.Item>
+                  <>
+                    {isAdmin && (
+                      <RadioArea.Item
+                        {...register("schedulingType")}
+                        value={SchedulingType.MANAGED}
+                        className={classNames("text-sm", !isAdmin && "w-1/2")}
+                        classNames={{ container: classNames(isAdmin && "w-full") }}
+                        data-testid="managed-event-type">
+                        <strong className="mb-1 block">{t("managed_event")}</strong>
+                        <p>{t("managed_event_description")}</p>
+                      </RadioArea.Item>
+                    )}
+                  </>
+                </RadioArea.Group>
+              </div>
+            )}
+          </div>
+          <DialogFooter showDivider>
+            <DialogClose />
+            <Button type="submit" loading={createMutation.isPending}>
+              {t("continue")}
+            </Button>
+          </DialogFooter>
+        </Form>
       </DialogContent>
     </Dialog>
   );
