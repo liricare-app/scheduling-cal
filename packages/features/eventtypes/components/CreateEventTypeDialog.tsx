@@ -132,6 +132,10 @@ export default function CreateEventTypeDialog({
         <Form
           form={form}
           handleSubmit={(values) => {
+            // set centralize price
+            values.price = values?.price > 0 ? values.price * 100 : undefined;
+
+            // Call the mutation with the updated values
             createMutation.mutate(values);
           }}>
           <div className="mt-3 space-y-6 pb-11">
