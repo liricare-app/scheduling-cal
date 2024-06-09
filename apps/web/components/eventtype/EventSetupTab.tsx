@@ -486,6 +486,14 @@ export const EventSetupTab = (
             data-testid="event-title"
             {...formMethods.register("title")}
           />
+          <TextField
+            required
+            label={t("price")}
+            defaultValue={eventType?.price > 0 ? eventType.price / 100 : undefined}
+            {...formMethods.register("price", {
+              setValueAs: (v) => parseFloat(v, 10),
+            })}
+          />
           <div>
             <Label htmlFor="editor">
               {t("description")}

@@ -169,6 +169,10 @@ export default function CreateEventTypeDialog({
         <Form
           form={form}
           handleSubmit={(values) => {
+            // set centralize price
+            values.price = values?.price > 0 ? values.price * 100 : undefined;
+
+            // Call the mutation with the updated values
             createMutation.mutate(values);
           }}>
           <div className="mt-3 space-y-6 pb-11">
@@ -256,6 +260,21 @@ export default function CreateEventTypeDialog({
                     className="pr-4"
                     {...register("length", { valueAsNumber: true })}
                     addOnSuffix={t("minutes")}
+                  />
+                </div>
+
+                <div className="relative">
+                  <TextField
+                    type="number"
+                    required
+                    min="0"
+                    placeholder="$100"
+                    label="Price"
+                    className="pr-4"
+                    {...register("price", { valueAsNumber: true })}
+                    onChange={(e) => {
+                      form.setValue("price", parseInt(e?.target.value, 10));
+                    }}
                   />
                 </div>
               </>

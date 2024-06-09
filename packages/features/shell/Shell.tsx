@@ -40,11 +40,8 @@ import VerifyEmailBanner, {
 import classNames from "@calcom/lib/classNames";
 import {
   APP_NAME,
-  DESKTOP_APP_LINK,
   ENABLE_PROFILE_SWITCHER,
   IS_VISUAL_REGRESSION_TESTING,
-  JOIN_DISCORD,
-  ROADMAP,
   TOP_BANNER_HEIGHT,
   WEBAPP_URL,
 } from "@calcom/lib/constants";
@@ -82,7 +79,6 @@ import {
   useCalcomTheme,
   type IconName,
 } from "@calcom/ui";
-import { Discord } from "@calcom/ui/components/icon/Discord";
 import { useGetUserAttributes } from "@calcom/web/components/settings/platform/hooks/useGetUserAttributes";
 
 import { useOrgBranding } from "../ee/organizations/context/provider";
@@ -507,20 +503,6 @@ function UserDropdown({ small }: UserDropdownProps) {
 
                 <DropdownMenuItem>
                   <DropdownItem
-                    CustomStartIcon={<Discord className="text-default h-4 w-4" />}
-                    target="_blank"
-                    rel="noreferrer"
-                    href={JOIN_DISCORD}>
-                    {t("join_our_discord")}
-                  </DropdownItem>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <DropdownItem StartIcon="map" target="_blank" href={ROADMAP}>
-                    {t("visit_roadmap")}
-                  </DropdownItem>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <DropdownItem
                     type="button"
                     StartIcon="circle-help"
                     aria-hidden="true"
@@ -528,18 +510,6 @@ function UserDropdown({ small }: UserDropdownProps) {
                     {t("help")}
                   </DropdownItem>
                 </DropdownMenuItem>
-                {!isPlatformUser && (
-                  <DropdownMenuItem className="todesktop:hidden hidden lg:flex">
-                    <DropdownItem
-                      StartIcon="download"
-                      target="_blank"
-                      rel="noreferrer"
-                      href={DESKTOP_APP_LINK}>
-                      {t("download_desktop_app")}
-                    </DropdownItem>
-                  </DropdownMenuItem>
-                )}
-
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem>

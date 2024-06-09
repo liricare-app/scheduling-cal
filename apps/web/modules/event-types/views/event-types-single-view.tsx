@@ -675,6 +675,8 @@ const EventTypePage = (props: EventTypeSetupProps) => {
           form={formMethods}
           id="event-type-form"
           handleSubmit={async (values) => {
+            // set centralize price
+            values.price = values?.price > 0 ? values.price * 100 : undefined;
             const { children } = values;
             const dirtyValues = getDirtyFields(values);
             const dirtyFieldExists = Object.keys(dirtyValues).length !== 0;

@@ -38,16 +38,33 @@ const handlePayment = async (
   const PaymentService = paymentApp.lib.PaymentService as any;
 
   const paymentInstance = new PaymentService(paymentAppCredentials) as IAbstractPaymentService;
+  let paymentOption;
+  try {
+    paymentOption =
+      selectedEventType?.metadata?.apps?.[paymentAppCredentials.appId].paymentOption || "ON_BOOKING";
+  } catch (error) {
+    paymentOption = "ON_BOOKING";
+  }
 
-  const paymentOption =
-    selectedEventType?.metadata?.apps?.[paymentAppCredentials.appId].paymentOption || "ON_BOOKING";
-
+  let price;
+  try {
+    price =
+      selectedEventType?.metadata?.apps?.[paymentAppCredentials.appId]?.price || selectedEventType?.price;
+  } catch (error) {
+    price = selectedEventType?.price;
+  }
+  let currency;
+  try {
+    currency = selectedEventType?.metadata?.apps?.[paymentAppCredentials.appId]?.currency || "usd";
+  } catch (error) {
+    currency = "usd";
+  }
   let paymentData;
   if (paymentOption === "HOLD") {
     paymentData = await paymentInstance.collectCard(
       {
-        amount: selectedEventType?.metadata?.apps?.[paymentAppCredentials.appId].price,
-        currency: selectedEventType?.metadata?.apps?.[paymentAppCredentials.appId].currency,
+        amount: price,
+        currency: currency,
       },
       booking.id,
       bookerEmail,
@@ -56,8 +73,8 @@ const handlePayment = async (
   } else {
     paymentData = await paymentInstance.create(
       {
-        amount: selectedEventType?.metadata?.apps?.[paymentAppCredentials.appId].price,
-        currency: selectedEventType?.metadata?.apps?.[paymentAppCredentials.appId].currency,
+        amount: price,
+        currency: currency,
       },
       booking.id,
       booking.userId,

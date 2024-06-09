@@ -10,6 +10,17 @@ export default function getPaymentAppData(
   forcedGet?: boolean
 ) {
   const metadataApps = eventType?.metadata?.apps as unknown as EventTypeAppsList;
+  // Only for liricare centralize paiement with the field price and the credentialId
+  if (eventType?.price > 0 && parseInt(process.env.NEXT_PUBLIC_CREDENTIAL_ID, 10) > 0) {
+    return {
+      enabled: true,
+      price: eventType?.price,
+      currency: "usd",
+      appId: "stripe",
+      paymentOption: "ON_BOOKING",
+      credentialId: parseInt(process.env.NEXT_PUBLIC_CREDENTIAL_ID, 10),
+    };
+  }
   if (!metadataApps) {
     return { enabled: false, price: 0, currency: "usd", appId: null };
   }
