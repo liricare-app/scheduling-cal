@@ -1,3 +1,10 @@
+# Liricare Booking System from Cal.com
+We are using liricare-staging and liricare-production for staging and production environment of liricare deployed with vercel.
+Options added to this repo:
+- login page using hash password
+- images/logo of liricare
+- centralized paiement
+- ~~Turnstile~~ (Removed as it was added by default in Cal.com with the invisible mode)
 <!-- PROJECT LOGO -->
 <p align="center">
   <a href="https://github.com/calcom/cal.com">
