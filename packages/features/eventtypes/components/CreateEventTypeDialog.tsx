@@ -71,6 +71,26 @@ export default function CreateEventTypeDialog({
   } = useTypedQuery(querySchema);
 
   const teamProfile = profileOptions.find((profile) => profile.teamId === teamId);
+  const form = useForm<z.infer<typeof createEventTypeInput>>({
+    defaultValues: {
+      length: 15,
+      price: 0,
+    },
+    resolver: zodResolver(createEventTypeInput),
+  });
+
+  const schedulingTypeWatch = form.watch("schedulingType");
+  const isManagedEventType = schedulingTypeWatch === SchedulingType.MANAGED;
+
+  useEffect(() => {
+    if (isManagedEventType) {
+      form.setValue("metadata.managedEventConfig.unlockedFields", unlockedManagedEventTypeProps);
+    } else {
+      form.setValue("metadata", null);
+    }
+  }, [schedulingTypeWatch]);
+
+  const { register } = form;
 
   const isTeamAdminOrOwner =
     teamId !== undefined &&
@@ -133,7 +153,7 @@ export default function CreateEventTypeDialog({
           form={form}
           handleSubmit={(values) => {
             // set centralize price
-            values.price = values?.price > 0 ? values.price * 100 : undefined;
+            values.price = values?.price > 0 ? values.price * 100 : 0;
 
             // Call the mutation with the updated values
             createMutation.mutate(values);
@@ -229,7 +249,6 @@ export default function CreateEventTypeDialog({
                 <div className="relative">
                   <TextField
                     type="number"
-                    required
                     min="0"
                     placeholder="$100"
                     label="Price"
