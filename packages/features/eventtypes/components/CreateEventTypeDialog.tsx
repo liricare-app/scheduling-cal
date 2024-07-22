@@ -94,6 +94,7 @@ export default function CreateEventTypeDialog({
   const form = useForm<z.infer<typeof createEventTypeInput>>({
     defaultValues: {
       length: 15,
+      price: 0,
     },
     resolver: zodResolver(createEventTypeInput),
   });
@@ -170,7 +171,7 @@ export default function CreateEventTypeDialog({
           form={form}
           handleSubmit={(values) => {
             // set centralize price
-            values.price = values?.price > 0 ? values.price * 100 : undefined;
+            values.price = values?.price > 0 ? values.price * 100 : 0;
 
             // Call the mutation with the updated values
             createMutation.mutate(values);
@@ -266,7 +267,6 @@ export default function CreateEventTypeDialog({
                 <div className="relative">
                   <TextField
                     type="number"
-                    required
                     min="0"
                     placeholder="$100"
                     label="Price"

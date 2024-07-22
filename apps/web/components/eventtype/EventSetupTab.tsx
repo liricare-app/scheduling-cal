@@ -487,11 +487,13 @@ export const EventSetupTab = (
             {...formMethods.register("title")}
           />
           <TextField
-            required
             label={t("price")}
-            defaultValue={eventType?.price > 0 ? eventType.price / 100 : undefined}
+            defaultValue={eventType?.price > 0 ? eventType.price / 100 : 0}
             {...formMethods.register("price", {
-              setValueAs: (v) => parseFloat(v, 10),
+              setValueAs: (v) => {
+                const parsedValue = parseFloat(v);
+                return isNaN(parsedValue) ? 0 : parsedValue;
+              },
             })}
           />
           <div>
