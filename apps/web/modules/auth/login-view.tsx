@@ -285,7 +285,7 @@ PageProps & WithNonceProps<{}>) {
                 color="secondary"
                 disabled={formState.isSubmitting}
                 className="w-full justify-center">
-                <span>{twoFactorRequired ? t("submit") : "Take me to Dashboard"}</span>
+                <span>{twoFactorRequired ? t("submit") : "Take me to new Dashboard"}</span>
                 {lastUsed === "credentials" && !twoFactorRequired && <LastUsed className="text-gray-600" />}
               </Button>
             </div>
