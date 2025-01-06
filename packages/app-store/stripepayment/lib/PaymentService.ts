@@ -269,6 +269,11 @@ export class PaymentService implements IAbstractPaymentService {
         confirm: true,
       };
 
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+      console.log(params);
+
       const paymentIntent = await this.stripe.paymentIntents.create(params, {
         stripeAccount: this.credentials.stripe_user_id,
       });
