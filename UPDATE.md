@@ -22,3 +22,7 @@ yarn prisma migrate resolve --rolled-back "MIGRATON_NAME_YYYY_MM_DD"
 ```
 
  more details are [here](https://www.prisma.io/docs/orm/prisma-migrate/workflows/patching-and-hotfixing#failed-migration)
+
+## Platform FEES
+
+platform fees see [github ticket](https://github.com/calcom/cal.com/discussions/18510?sort=old)

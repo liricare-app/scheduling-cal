@@ -220,6 +220,10 @@ export class PaymentService implements IAbstractPaymentService {
   }
 
   async chargeCard(payment: Payment, _bookingId?: Booking["id"]): Promise<Payment> {
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("Welcome");
     try {
       if (!this.credentials) {
         throw new Error("Stripe credentials not found");
@@ -272,6 +276,7 @@ export class PaymentService implements IAbstractPaymentService {
       console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
       console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
       console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+      console.log("params values is:");
       console.log(params);
 
       const paymentIntent = await this.stripe.paymentIntents.create(params, {
