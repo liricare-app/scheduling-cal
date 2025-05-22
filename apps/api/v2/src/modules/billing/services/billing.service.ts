@@ -216,7 +216,7 @@ export class BillingService implements OnModuleDestroy {
     }
   }
 
-  async handleStripeCheckoutEvents(event: Stripe.Event) {
+  async handleStripeCheckoutEvents(event: Stripe.Event, stripe: Stripe) {
     const checkoutSession = event.data.object as Stripe.Checkout.Session;
 
     if (!checkoutSession.metadata?.teamId) {
@@ -252,6 +252,36 @@ export class BillingService implements OnModuleDestroy {
       await this.updateStripeSubscriptionForTeam(teamId, plan as PlatformPlan);
     }
 
+    // 🧾 Commission logic starts here
+    const paymentIntentId = checkoutSession.payment_intent as string;
+
+    if (paymentIntentId) {
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      const charge = paymentIntent.charges?.data?.[0];
+
+      if (charge) {
+        const amount = charge.amount; // in cents
+        const currency = charge.currency;
+
+        const commissionAmount = Math.floor(amount * 0.2); // 20% commission
+
+        try {
+          if (!process.env.STRIPE_ACCOUNT) throw new Error("STRIPE_ACCOUNT is not set");
+          await stripe.transfers.create({
+            amount: commissionAmount,
+            currency,
+            destination: process.env.STRIPE_ACCOUNT,
+            transfer_group: checkoutSession.id,
+          });
+
+          this.logger.log(
+            `Commission of ${commissionAmount} ${currency} transferred to ${process.env.STRIPE_ACCOUNT}`
+          );
+        } catch (error) {
+          this.logger.error("Failed to transfer commission to connected account", error);
+        }
+      }
+    }
     return;
   }
 

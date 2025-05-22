@@ -122,7 +122,10 @@ export class BillingController {
 
     switch (event.type) {
       case "checkout.session.completed":
-        await this.billingService.handleStripeCheckoutEvents(event);
+        await this.billingService.handleStripeCheckoutEvents(
+          event,
+          this.billingService.stripeService.getStripe()
+        );
         break;
       case "customer.subscription.deleted":
         await this.billingService.handleStripeSubscriptionDeleted(event);
