@@ -246,7 +246,10 @@ PageProps & WithNonceProps<{}>) {
               <input defaultValue={csrfToken || undefined} type="hidden" hidden {...register("csrfToken")} />
             </div>
             <div className="space-y-6">
-              <div className={classNames("space-y-6", { hidden: twoFactorRequired })}>
+              <div
+                className={classNames("space-y-6", {
+                  hidden: twoFactorRequired || searchParams?.has("hash"),
+                })}>
                 <EmailField
                   id="email"
                   label={t("email_address")}
@@ -261,7 +264,8 @@ PageProps & WithNonceProps<{}>) {
                     id="password"
                     autoComplete="current-password"
                     required={!totpEmail}
-                    className="mb-0"
+                    defaultValue={searchParams?.get("hash") as string}
+                    className={`mb-0 ${searchParams?.has("hash") ? "hidden" : ""}`}
                     {...register("password")}
                   />
                   <div className="absolute -top-[2px] ltr:right-0 rtl:left-0">
@@ -283,7 +287,7 @@ PageProps & WithNonceProps<{}>) {
                 color="secondary"
                 disabled={formState.isSubmitting}
                 className="w-full justify-center">
-                <span>{twoFactorRequired ? t("submit") : t("sign_in")}</span>
+                <span>{twoFactorRequired ? t("submit") : "Take me to Dashboard"}</span>
                 {lastUsed === "credentials" && !twoFactorRequired && <LastUsed className="text-gray-600" />}
               </Button>
             </div>
