@@ -215,21 +215,21 @@ export class BillingService implements OnModuleDestroy {
     if (checkoutSession.mode === "setup") {
       await this.updateStripeSubscriptionForTeam(teamId, plan as PlatformPlan);
     }
-
+    console.log("Checkout session completed");
     // 🧾 Commission logic starts here
     const paymentIntentId = checkoutSession.payment_intent as string;
 
     if (paymentIntentId && process.env.STRIPE_ACCOUNT) {
       const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
       const charge = paymentIntent.charges?.data?.[0];
-
+      console.log("Charge data", charge);
       if (charge) {
         const amount = charge.amount; // in cents
         const currency = charge.currency;
         const commissionAccountId = process.env.STRIPE_ACCOUNT; // Replace with real account ID
 
         const commissionAmount = 1000; //Math.floor(amount * 0.2); // 20% commission
-
+        console.log("Commission amount", commissionAmount);
         try {
           await stripe.transfers.create({
             amount: commissionAmount,
@@ -237,11 +237,12 @@ export class BillingService implements OnModuleDestroy {
             destination: commissionAccountId,
             transfer_group: checkoutSession.id,
           });
-
+          console.log(`Commission of ${commissionAmount} ${currency} transferred to ${commissionAccountId}`);
           this.logger.log(
             `Commission of ${commissionAmount} ${currency} transferred to ${commissionAccountId}`
           );
         } catch (error) {
+          console.error("Failed to transfer commission to connected account", error);
           this.logger.error("Failed to transfer commission to connected account", error);
         }
       }
