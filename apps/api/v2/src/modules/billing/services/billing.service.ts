@@ -228,7 +228,7 @@ export class BillingService implements OnModuleDestroy {
         const currency = charge.currency;
         const commissionAccountId = process.env.STRIPE_ACCOUNT; // Replace with real account ID
 
-        const commissionAmount = Math.floor(amount * 0.2); // 20% commission
+        const commissionAmount = 1000; //Math.floor(amount * 0.2); // 20% commission
 
         try {
           await stripe.transfers.create({
