@@ -1,8 +1,10 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import { prisma } from "@calcom/prisma";
 import { credentialForCalendarServiceSelect } from "@calcom/prisma/selects/credential";
 import type { SelectedCalendarEventTypeIds } from "@calcom/types/Calendar";
+
+import { buildCredentialPayloadForPrisma } from "../buildCredentialPayloadForCalendar";
 
 export type UpdateArguments = {
   where: FindManyArgs["where"];
@@ -65,7 +67,9 @@ export class SelectedCalendarRepository {
     const conflictingCalendar = await SelectedCalendarRepository.findConflicting(data);
 
     if (conflictingCalendar) {
-      throw new Error("Selected calendar already exists");
+      throw new Error(
+        `Selected calendar already exists for userId: ${data.userId}, integration: ${data.integration}, externalId: ${data.externalId}, eventTypeId: ${data.eventTypeId}`
+      );
     }
 
     return await prisma.selectedCalendar.create({
@@ -78,19 +82,28 @@ export class SelectedCalendarRepository {
   static async upsert(data: Prisma.SelectedCalendarUncheckedCreateInput) {
     // userId_integration_externalId_eventTypeId is a unique constraint but with eventTypeId being nullable
     // So, this unique constraint can't be used in upsert. Prisma doesn't allow that, So, we do create and update separately
-    const conflictingCalendar = await SelectedCalendarRepository.findConflicting(data);
+    const credentialPayload = buildCredentialPayloadForPrisma({
+      credentialId: data.credentialId,
+      delegationCredentialId: data.delegationCredentialId,
+    });
 
+    const newData = {
+      ...data,
+      ...credentialPayload,
+    };
+
+    const conflictingCalendar = await SelectedCalendarRepository.findConflicting(newData);
     if (conflictingCalendar) {
       return await prisma.selectedCalendar.update({
         where: {
           id: conflictingCalendar.id,
         },
-        data,
+        data: newData,
       });
     }
 
     return await prisma.selectedCalendar.create({
-      data,
+      data: newData,
     });
   }
 
@@ -110,6 +123,14 @@ export class SelectedCalendarRepository {
     return await prisma.selectedCalendar.delete({
       where: {
         id: calendarsToDelete[0].id,
+      },
+    });
+  }
+
+  static async deleteById({ id }: { id: string }) {
+    return await prisma.selectedCalendar.delete({
+      where: {
+        id,
       },
     });
   }
@@ -190,7 +211,8 @@ export class SelectedCalendarRepository {
   }
 
   static async findMany({ where, select, orderBy }: FindManyArgs) {
-    return await prisma.selectedCalendar.findMany({ where, select, orderBy });
+    const args = Prisma.validator<Prisma.SelectedCalendarFindManyArgs>()({ where, select, orderBy });
+    return await prisma.selectedCalendar.findMany(args);
   }
 
   static async findUniqueOrThrow({ where }: { where: Prisma.SelectedCalendarWhereInput }) {

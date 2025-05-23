@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 
-import { TestForm } from "@calcom/app-store/routing-forms/components/SingleForm";
+import { TestForm } from "@calcom/app-store/routing-forms/components/_components/TestForm";
 import type { RoutingForm } from "@calcom/app-store/routing-forms/types/types";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { trpc } from "@calcom/trpc";
-import { Label, Select } from "@calcom/ui";
-
-import InsightsLayout from "./layout";
+import { Label } from "@calcom/ui/components/form";
+import { Select } from "@calcom/ui/components/form";
 
 export default function InsightsVirtualQueuesPage() {
   const { t } = useLocale();
@@ -24,7 +23,7 @@ export default function InsightsVirtualQueuesPage() {
   }
 
   return (
-    <InsightsLayout>
+    <>
       <Label>{t("routing_form")}</Label>
       <Select
         placeholder="Select project"
@@ -40,9 +39,13 @@ export default function InsightsVirtualQueuesPage() {
         value={selectedForm ? { label: selectedForm.name, value: selectedForm.id } : undefined}
       />
       <div className="mt-10">
-        {selectedForm ? <TestForm form={selectedForm} showAllData={false} /> : <></>}
+        {selectedForm ? (
+          <TestForm form={selectedForm} supportsTeamMembersMatchingLogic={true} showRRData={true} />
+        ) : (
+          <></>
+        )}
       </div>
-    </InsightsLayout>
+    </>
   );
 
   return <></>;

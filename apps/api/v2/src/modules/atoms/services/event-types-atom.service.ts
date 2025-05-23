@@ -2,35 +2,38 @@ import { EventTypesService_2024_06_14 } from "@/ee/event-types/event-types_2024_
 import { AtomsRepository } from "@/modules/atoms/atoms.repository";
 import { CredentialsRepository } from "@/modules/credentials/credentials.repository";
 import { MembershipsRepository } from "@/modules/memberships/memberships.repository";
-import { TeamsEventTypesService } from "@/modules/teams/event-types/services/teams-event-types.service";
 import { PrismaReadService } from "@/modules/prisma/prisma-read.service";
 import { PrismaWriteService } from "@/modules/prisma/prisma-write.service";
+import { TeamsEventTypesService } from "@/modules/teams/event-types/services/teams-event-types.service";
 import { UsersService } from "@/modules/users/services/users.service";
 import { UserWithProfile } from "@/modules/users/users.repository";
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 
+import { checkAdminOrOwner, getClientSecretFromPayment } from "@calcom/platform-libraries";
+import type { TeamQuery } from "@calcom/platform-libraries";
+import { enrichUserWithDelegationConferencingCredentialsWithoutOrgId } from "@calcom/platform-libraries/app-store";
+import { getEnabledAppsFromCredentials, getAppFromSlug } from "@calcom/platform-libraries/app-store";
+import type {
+  App,
+  TDependencyData,
+  CredentialOwner,
+  CredentialPayload,
+  CredentialDataWithTeamName,
+  LocationOption,
+} from "@calcom/platform-libraries/app-store";
+import {
+  getEventTypeById,
+  bulkUpdateEventsToDefaultLocation,
+  bulkUpdateTeamEventsToDefaultLocation,
+  getBulkUserEventTypes,
+  getBulkTeamEventTypes,
+} from "@calcom/platform-libraries/event-types";
 import {
   updateEventType,
   TUpdateEventTypeInputSchema,
   systemBeforeFieldEmail,
-  getEventTypeById,
-  getEnabledAppsFromCredentials,
-  getAppFromSlug,
-  MembershipRole,
   EventTypeMetaDataSchema,
-  getClientSecretFromPayment,
-  getBulkEventTypes,
-  bulkUpdateEventsToDefaultLocation,
-} from "@calcom/platform-libraries";
-import type {
-  App,
-  CredentialDataWithTeamName,
-  LocationOption,
-  TeamQuery,
-  CredentialOwner,
-  TDependencyData,
-  CredentialPayload,
-} from "@calcom/platform-libraries";
+} from "@calcom/platform-libraries/event-types";
 import { PrismaClient } from "@calcom/prisma";
 
 type EnabledAppType = App & {
@@ -78,11 +81,19 @@ export class EventTypesAtomService {
       this.eventTypeService.checkUserOwnsEventType(user.id, eventType.eventType);
     }
 
+    // note (Lauris): don't show platform owner as one of the people that can be assigned to managed team event type
+    const onlyManagedTeamMembers = eventType.teamMembers.filter((user) => user.isPlatformManaged);
+    eventType.teamMembers = onlyManagedTeamMembers;
+
     return eventType;
   }
 
   async getUserEventTypes(userId: number) {
-    return getBulkEventTypes(userId);
+    return getBulkUserEventTypes(userId);
+  }
+
+  async getTeamEventTypes(teamId: number) {
+    return getBulkTeamEventTypes(teamId);
   }
 
   async updateTeamEventType(
@@ -93,9 +104,10 @@ export class EventTypesAtomService {
   ) {
     await this.checkCanUpdateTeamEventType(user.id, eventTypeId, teamId, body.scheduleId);
     const eventTypeUser = await this.eventTypeService.getUserToUpdateEvent(user);
-    const bookingFields = [...(body.bookingFields || [])];
+    const bookingFields = body.bookingFields ? [...body.bookingFields] : undefined;
 
     if (
+      bookingFields?.length &&
       !bookingFields.find((field) => field.type === "email") &&
       !bookingFields.find((field) => field.type === "phone")
     ) {
@@ -103,7 +115,7 @@ export class EventTypesAtomService {
     }
 
     const eventType = await updateEventType({
-      input: { id: eventTypeId, ...body, bookingFields },
+      input: { ...body, id: eventTypeId, bookingFields },
       ctx: {
         user: eventTypeUser,
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -116,15 +128,16 @@ export class EventTypesAtomService {
       throw new NotFoundException(`Event type with id ${eventTypeId} not found`);
     }
 
-    return eventType.eventType;
+    return eventType;
   }
 
   async updateEventType(eventTypeId: number, body: TUpdateEventTypeInputSchema, user: UserWithProfile) {
     await this.eventTypeService.checkCanUpdateEventType(user.id, eventTypeId, body.scheduleId);
     const eventTypeUser = await this.eventTypeService.getUserToUpdateEvent(user);
-    const bookingFields = [...(body.bookingFields || [])];
+    const bookingFields = body.bookingFields ? [...body.bookingFields] : undefined;
 
     if (
+      bookingFields?.length &&
       !bookingFields.find((field) => field.type === "email") &&
       !bookingFields.find((field) => field.type === "phone")
     ) {
@@ -132,7 +145,7 @@ export class EventTypesAtomService {
     }
 
     const eventType = await updateEventType({
-      input: { id: eventTypeId, ...body, bookingFields },
+      input: { ...body, id: eventTypeId, bookingFields },
       ctx: {
         user: eventTypeUser,
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -145,10 +158,15 @@ export class EventTypesAtomService {
       throw new NotFoundException(`Event type with id ${eventTypeId} not found`);
     }
 
-    return eventType.eventType;
+    return eventType;
   }
 
-  async checkCanUpdateTeamEventType(userId: number, eventTypeId: number, teamId: number, scheduleId: number) {
+  async checkCanUpdateTeamEventType(
+    userId: number,
+    eventTypeId: number,
+    teamId: number,
+    scheduleId: number | null | undefined
+  ) {
     await this.checkTeamOwnsEventType(userId, eventTypeId, teamId);
     await this.teamEventTypeService.validateEventTypeExists(teamId, eventTypeId);
     await this.eventTypeService.checkUserOwnsSchedule(userId, scheduleId);
@@ -177,11 +195,11 @@ export class EventTypesAtomService {
     }
   }
 
-  async getEventTypesAppIntegration(slug: string, userId: number, userName: string | null, teamId?: number) {
-    let credentials = await this.credentialsRepository.getAllUserCredentialsById(userId);
+  async getEventTypesAppIntegration(slug: string, user: UserWithProfile, teamId?: number) {
+    let credentials = await this.credentialsRepository.getAllUserCredentialsById(user.id);
     let userTeams: TeamQuery[] = [];
     if (teamId) {
-      const teamsQuery = await this.atomsRepository.getUserTeams(userId);
+      const teamsQuery = await this.atomsRepository.getUserTeams(user.id);
       // If a team is a part of an org then include those apps
       // Don't want to iterate over these parent teams
       const filteredTeams: TeamQuery[] = [];
@@ -208,10 +226,26 @@ export class EventTypesAtomService {
       } else {
         credentials = credentials.concat(teamAppCredentials);
       }
+    } else {
+      if (slug !== "stripe") {
+        // We only add delegationCredentials if the request for location options is for a user because DelegationCredential Credential is applicable to Users only.
+        const { credentials: allCredentials } =
+          await enrichUserWithDelegationConferencingCredentialsWithoutOrgId({
+            user: {
+              ...user,
+              credentials,
+            },
+          });
+        credentials = allCredentials;
+      }
     }
-    const enabledApps = await getEnabledAppsFromCredentials(credentials, {
-      where: { slug },
-    });
+
+    const enabledApps = await getEnabledAppsFromCredentials(
+      credentials as unknown as CredentialDataWithTeamName[],
+      {
+        where: { slug },
+      }
+    );
     const apps = await Promise.all(
       enabledApps
         .filter(({ ...app }) => app.slug === slug)
@@ -241,9 +275,7 @@ export class EventTypesAtomService {
                     name: team.name,
                     logoUrl: team.logoUrl,
                     credentialId: c.id,
-                    isAdmin:
-                      team.members[0].role === MembershipRole.ADMIN ||
-                      team.members[0].role === MembershipRole.OWNER,
+                    isAdmin: checkAdminOrOwner(team.members[0].role),
                   };
                 })
             );
@@ -262,7 +294,7 @@ export class EventTypesAtomService {
               });
             }
             const credentialOwner: CredentialOwner = {
-              name: userName,
+              name: user.name,
               teamId,
             };
             return {
@@ -327,6 +359,14 @@ export class EventTypesAtomService {
       eventTypeIds,
       user,
       prisma: this.dbWrite.prisma as unknown as PrismaClient,
+    });
+  }
+
+  async bulkUpdateTeamEventTypesDefaultLocation(eventTypeIds: number[], teamId: number) {
+    return bulkUpdateTeamEventsToDefaultLocation({
+      eventTypeIds,
+      prisma: this.dbWrite.prisma as unknown as PrismaClient,
+      teamId,
     });
   }
 }

@@ -11,7 +11,8 @@
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "setupFiles": ["<rootDir>/test/setEnvVars.ts", "jest-date-mock"],
+  "setupFilesAfterEnv": ["<rootDir>/test/jest.setup-e2e.ts"],
   "reporters": ["default", "jest-summarizing-reporter"],
   "workerIdleMemoryLimit": "512MB",
-  "maxWorkers": 2
+  "maxWorkers": 8
 }

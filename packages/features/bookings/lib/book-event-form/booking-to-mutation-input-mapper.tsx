@@ -4,8 +4,10 @@ import dayjs from "@calcom/dayjs";
 import { isBookingDryRun } from "@calcom/features/bookings/Booker/utils/isBookingDryRun";
 import { getRoutedTeamMemberIdsFromSearchParams } from "@calcom/lib/bookings/getRoutedTeamMemberIdsFromSearchParams";
 import { parseRecurringDates } from "@calcom/lib/parse-dates";
+import type { RoutingFormSearchParams } from "@calcom/platform-types";
 
 import type { BookerEvent, BookingCreateBody, RecurringBookingCreateBody } from "../../types";
+import type { Tracking } from "../handleNewBooking/types";
 
 export type BookingOptions = {
   values: Record<string, unknown>;
@@ -26,6 +28,7 @@ export type BookingOptions = {
   crmOwnerRecordType?: string | null;
   crmAppSlug?: string | null;
   orgSlug?: string;
+  routingFormSearchParams?: RoutingFormSearchParams;
 };
 
 export const mapBookingToMutationInput = ({
@@ -46,8 +49,9 @@ export const mapBookingToMutationInput = ({
   crmOwnerRecordType,
   crmAppSlug,
   orgSlug,
+  routingFormSearchParams,
 }: BookingOptions): BookingCreateBody => {
-  const searchParams = new URLSearchParams(window.location.search);
+  const searchParams = new URLSearchParams(routingFormSearchParams ?? window.location.search);
   const routedTeamMemberIds = getRoutedTeamMemberIdsFromSearchParams(searchParams);
   const routingFormResponseIdParam = searchParams.get("cal.routingFormResponseId");
   const routingFormResponseId = routingFormResponseIdParam ? Number(routingFormResponseIdParam) : undefined;
@@ -56,6 +60,7 @@ export const mapBookingToMutationInput = ({
   const _isDryRun = isBookingDryRun(searchParams);
   const _cacheParam = searchParams?.get("cal.cache");
   const _shouldServeCache = _cacheParam ? _cacheParam === "true" : undefined;
+  const dub_id = searchParams?.get("dub_id");
 
   return {
     ...values,
@@ -87,16 +92,18 @@ export const mapBookingToMutationInput = ({
     reroutingFormResponses: reroutingFormResponses ? JSON.parse(reroutingFormResponses) : undefined,
     _isDryRun,
     _shouldServeCache,
+    dub_id,
   };
 };
 
 // This method is here to ensure that the types are correct (recurring count is required),
 // as well as generate a unique ID for the recurring bookings and turn one single booking
-// into an array of mutiple bookings based on the recurring count.
+// into an array of multiple bookings based on the recurring count.
 // Other than that it forwards the mapping to mapBookingToMutationInput.
 export const mapRecurringBookingToMutationInput = (
   booking: BookingOptions,
-  recurringCount: number
+  recurringCount: number,
+  tracking?: Tracking
 ): RecurringBookingCreateBody[] => {
   const recurringEventId = uuidv4();
   const [, recurringDates] = parseRecurringDates(
@@ -121,5 +128,6 @@ export const mapRecurringBookingToMutationInput = (
     recurringEventId,
     schedulingType: booking.event.schedulingType || undefined,
     recurringCount: recurringDates.length,
+    tracking,
   }));
 };

@@ -55,6 +55,7 @@ const user: User & { credentials: CredentialPayload[] } = {
   allowDynamicBooking: true,
   timeFormat: 12,
   travelSchedules: [],
+  locked: false,
 };
 
 const customInputs: CustomInputSchema[] = [];
@@ -87,7 +88,11 @@ const commons = {
   seatsPerTimeSlot: null,
   seatsShowAttendees: null,
   seatsShowAvailabilityCount: null,
+  disableCancelling: false,
+  disableRescheduling: false,
   onlyShowFirstAvailableSlot: false,
+  allowReschedulingPastBookings: false,
+  hideOrganizerEmail: false,
   id: 0,
   hideCalendarNotes: false,
   hideCalendarEventDetails: false,
@@ -108,6 +113,7 @@ const commons = {
   workflows: [],
   users: [user],
   hosts: [],
+  subsetOfHosts: [],
   metadata: EventTypeMetaDataSchema.parse({}),
   bookingFields: [],
   assignAllTeamMembers: false,
@@ -121,7 +127,11 @@ const commons = {
   autoTranslateDescriptionEnabled: false,
   fieldTranslations: [],
   maxLeadThreshold: null,
+  includeNoShowInRRCalculation: false,
   useEventLevelSelectedCalendars: false,
+  rrResetInterval: null,
+  interfaceLanguage: null,
+  customReplyToEmail: null,
 };
 
 export const dynamicEvent = {
@@ -178,7 +188,7 @@ export const getUsernameList = (users: string | string[] | undefined): string[] 
   // So, even though this code handles even if individual user is dynamic link, that isn't a possibility right now.
   users = arrayCast(users);
 
-  const allUsers = users.map((user) => user.replace(/( |%20|%2b)/g, "+").split("+")).flat();
+  const allUsers = users.map((user) => user.replace(/( |%20|%2b)/gi, "+").split("+")).flat();
   return Array.prototype.concat(...allUsers.map((userSlug) => slugify(userSlug)));
 };
 

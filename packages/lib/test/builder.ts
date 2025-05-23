@@ -1,8 +1,9 @@
 import { faker } from "@faker-js/faker";
 import type { Booking, EventType, Prisma, Webhook, BookingReference } from "@prisma/client";
-import type { TFunction } from "next-i18next";
+import type { TFunction } from "i18next";
 
 import getICalUID from "@calcom/emails/lib/getICalUID";
+import { CreationSource } from "@calcom/prisma/enums";
 import { BookingStatus } from "@calcom/prisma/enums";
 import type { CalendarEvent, Person, VideoCallData } from "@calcom/types/Calendar";
 
@@ -76,6 +77,7 @@ export const buildBooking = (
     ratingFeedback: null,
     attendees: [],
     oneTimePassword: null,
+    creationSource: CreationSource.WEBAPP,
     ...booking,
   };
 };
@@ -86,6 +88,7 @@ export const buildEventType = (eventType?: Partial<EventType>): EventType => {
     title: faker.lorem.sentence(),
     slug: faker.lorem.slug(),
     description: faker.lorem.paragraph(),
+    interfaceLanguage: null,
     position: 1,
     isInstantEvent: false,
     instantMeetingParameters: [],
@@ -98,6 +101,7 @@ export const buildEventType = (eventType?: Partial<EventType>): EventType => {
     userId: null,
     teamId: null,
     requiresBookerEmailVerification: false,
+    canSendCalVideoTranscriptionEmails: true,
     useEventTypeDestinationCalendarEmail: false,
     eventName: faker.lorem.words(),
     timeZone: null,
@@ -120,8 +124,11 @@ export const buildEventType = (eventType?: Partial<EventType>): EventType => {
     onlyShowFirstAvailableSlot: false,
     seatsPerTimeSlot: null,
     seatsShowAttendees: null,
+    disableCancelling: false,
+    disableRescheduling: false,
     seatsShowAvailabilityCount: null,
     maxLeadThreshold: null,
+    includeNoShowInRRCalculation: false,
     schedulingType: null,
     scheduleId: null,
     bookingLimits: null,
@@ -144,6 +151,9 @@ export const buildEventType = (eventType?: Partial<EventType>): EventType => {
     rrSegmentQueryValue: null,
     autoTranslateDescriptionEnabled: false,
     useEventLevelSelectedCalendars: false,
+    allowReschedulingPastBookings: false,
+    hideOrganizerEmail: false,
+    customReplyToEmail: null,
     ...eventType,
   };
 };

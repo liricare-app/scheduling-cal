@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import checkForMultiplePaymentApps from "@calcom/app-store/_utils/payments/checkForMultiplePaymentApps";
-import { validateCustomEventName } from "@calcom/core/event";
 import {
   DEFAULT_PROMPT_VALUE,
   DEFAULT_BEGIN_MESSAGE,
@@ -16,9 +15,10 @@ import type {
   EventTypeSetupProps,
   EventTypeUpdateInput,
 } from "@calcom/features/eventtypes/lib/types";
-import { validateIntervalLimitOrder } from "@calcom/lib";
+import { validateCustomEventName } from "@calcom/lib/event";
 import { locationsResolver } from "@calcom/lib/event-types/utils/locationsResolver";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
+import { validateIntervalLimitOrder } from "@calcom/lib/intervalLimits/validateIntervalLimitOrder";
 import { validateBookerLayouts } from "@calcom/lib/validateBookerLayouts";
 import { eventTypeBookingFields as eventTypeBookingFieldsSchema } from "@calcom/prisma/zod-utils";
 
@@ -32,15 +32,10 @@ export const useEventTypeForm = ({
   onSubmit: (data: EventTypeUpdateInput) => void;
 }) => {
   const { t } = useLocale();
-  const bookingFields: Record<string, Fields[number]["name"]> = {};
   const [periodDates] = useState<{ startDate: Date; endDate: Date }>({
     startDate: new Date(eventType.periodStartDate || Date.now()),
     endDate: new Date(eventType.periodEndDate || Date.now()),
   });
-  eventType.bookingFields.forEach(({ name }: { name: string }) => {
-    bookingFields[name] = name;
-  });
-
   // this is a nightmare to type, will do in follow up PR
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const defaultValues: any = useMemo(() => {
@@ -86,10 +81,13 @@ export const useEventTypeForm = ({
       periodCountCalendarDays: eventType.periodCountCalendarDays ? true : false,
       schedulingType: eventType.schedulingType,
       requiresConfirmation: eventType.requiresConfirmation,
+      canSendCalVideoTranscriptionEmails: eventType.canSendCalVideoTranscriptionEmails,
       requiresConfirmationWillBlockSlot: eventType.requiresConfirmationWillBlockSlot,
       requiresConfirmationForFreeEmail: eventType.requiresConfirmationForFreeEmail,
       slotInterval: eventType.slotInterval,
       minimumBookingNotice: eventType.minimumBookingNotice,
+      allowReschedulingPastBookings: eventType.allowReschedulingPastBookings,
+      hideOrganizerEmail: eventType.hideOrganizerEmail,
       metadata: eventType.metadata,
       hosts: eventType.hosts.sort((a, b) => sortHosts(a, b, eventType.isRRWeightsEnabled)),
       successRedirectUrl: eventType.successRedirectUrl || "",
@@ -129,7 +127,9 @@ export const useEventTypeForm = ({
       },
       isRRWeightsEnabled: eventType.isRRWeightsEnabled,
       maxLeadThreshold: eventType.maxLeadThreshold,
+      includeNoShowInRRCalculation: eventType.includeNoShowInRRCalculation,
       useEventLevelSelectedCalendars: eventType.useEventLevelSelectedCalendars,
+      customReplyToEmail: eventType.customReplyToEmail || null,
     };
   }, [eventType, periodDates]);
 
@@ -143,6 +143,12 @@ export const useEventTypeForm = ({
           eventName: z
             .string()
             .superRefine((val, ctx) => {
+              const bookingFields: Record<string, Fields[number]["name"]> = {};
+              const _bookingFields = form.getValues("bookingFields");
+              _bookingFields.forEach(({ name }: { name: string }) => {
+                bookingFields[name] = name;
+              });
+
               const validationResult = validateCustomEventName(val, bookingFields);
               if (validationResult !== true) {
                 ctx.addIssue({
@@ -189,7 +195,6 @@ export const useEventTypeForm = ({
   };
 
   const getDirtyFields = (values: FormValues): Partial<FormValues> => {
-    console.log("🚀 ~ getDirtyFields ~ values:", values);
     if (!isFormDirty) {
       return {};
     }
@@ -277,6 +282,7 @@ export const useEventTypeForm = ({
       durationLimits,
       recurringEvent,
       eventTypeColor,
+      customReplyToEmail,
       locations,
       metadata,
       customInputs,
@@ -294,6 +300,13 @@ export const useEventTypeForm = ({
       ...input
     } = dirtyValues;
     if (length && !Number(length)) throw new Error(t("event_setup_length_error"));
+
+    const finalSeatsPerTimeSlot = seatsPerTimeSlot ?? values.seatsPerTimeSlot;
+    const finalRecurringEvent = recurringEvent ?? values.recurringEvent;
+
+    if (finalSeatsPerTimeSlot && finalRecurringEvent) {
+      throw new Error(t("recurring_event_seats_error"));
+    }
 
     if (bookingLimits) {
       const isValid = validateIntervalLimitOrder(bookingLimits);
@@ -347,6 +360,7 @@ export const useEventTypeForm = ({
       onlyShowFirstAvailableSlot,
       durationLimits,
       eventTypeColor,
+      customReplyToEmail,
       seatsPerTimeSlot,
       seatsShowAttendees,
       seatsShowAvailabilityCount,
@@ -369,7 +383,6 @@ export const useEventTypeForm = ({
     }, {}) as EventTypeUpdateInput;
 
     if (dirtyFieldExists) {
-      console.log("🚀 ~ handleSubmit ~ filteredPayload:", filteredPayload);
       onSubmit({ ...filteredPayload, id: eventType.id });
     }
   };
