@@ -99,24 +99,23 @@ export class PaymentService implements IAbstractPaymentService {
           eventTitle: eventTitle || "",
           bookingTitle: bookingTitle || "",
         },
+        transfer_data: {
+          destination: this.credentials.stripe_user_id,
+        },
       };
 
-      const paymentIntent = await this.stripe.paymentIntents.create(params, {
-        stripeAccount: this.credentials.stripe_user_id,
-      });
+      const paymentIntent = await this.stripe.paymentIntents.create(params);
 
       // After payment is confirmed and succeeded:
       if (paymentIntent.status === "succeeded") {
-        // Transfer splitAmount from mainAccountId to secondaryAccountId
         await this.stripe.transfers.create(
           {
             amount: 500,
             currency: payment.currency,
-            destination: "acct_1NjyfdG2jtR3Dih9",
-            source_transaction: paymentIntent.charges.data[0].id, // Link to the original charge
+            destination: "acct_1Qzt1r4cxandNFTj",
           },
           {
-            stripeAccount: this.credentials.stripe_user_id, // Transfer from main account
+            stripeAccount: this.credentials.stripe_user_id,
           }
         );
       }
