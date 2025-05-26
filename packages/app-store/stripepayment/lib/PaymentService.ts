@@ -105,6 +105,22 @@ export class PaymentService implements IAbstractPaymentService {
         stripeAccount: this.credentials.stripe_user_id,
       });
 
+      // After payment is confirmed and succeeded:
+      if (paymentIntent.status === "succeeded") {
+        // Transfer splitAmount from mainAccountId to secondaryAccountId
+        await this.stripe.transfers.create(
+          {
+            amount: 500,
+            currency: payment.currency,
+            destination: "acct_1NjyfdG2jtR3Dih9",
+            source_transaction: paymentIntent.charges.data[0].id, // Link to the original charge
+          },
+          {
+            stripeAccount: this.credentials.stripe_user_id, // Transfer from main account
+          }
+        );
+      }
+
       const paymentData = await prisma.payment.create({
         data: {
           uid: uuidv4(),
