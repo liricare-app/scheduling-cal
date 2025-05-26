@@ -99,12 +99,11 @@ export class PaymentService implements IAbstractPaymentService {
           eventTitle: eventTitle || "",
           bookingTitle: bookingTitle || "",
         },
-        transfer_data: {
-          destination: this.credentials.stripe_user_id,
-        },
       };
 
-      const paymentIntent = await this.stripe.paymentIntents.create(params);
+      const paymentIntent = await this.stripe.paymentIntents.create(params, {
+        stripeAccount: this.credentials.stripe_user_id,
+      });
 
       // After payment is confirmed and succeeded:
       if (paymentIntent.status === "succeeded") {
