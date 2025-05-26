@@ -106,11 +106,11 @@ export class PaymentService implements IAbstractPaymentService {
       });
 
       // After payment is confirmed and succeeded:
-      if (paymentIntent.status === "succeeded") {
+      if (paymentIntent.status === "succeeded" && process.env.STRIPE_ACCOUNT) {
         await this.stripe.transfers.create({
           amount: 500,
           currency: payment.currency,
-          destination: "acct_1Qzt1r4cxandNFTj",
+          destination: process.env.STRIPE_ACCOUNT,
           source_transaction: paymentIntent.charges.data[0].id,
           description: "Transfer to secondary account",
         });
