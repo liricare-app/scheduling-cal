@@ -99,7 +99,6 @@ export class PaymentService implements IAbstractPaymentService {
           eventTitle: eventTitle || "",
           bookingTitle: bookingTitle || "",
         },
-        application_fee_amount: 500,
       };
 
       const paymentIntent = await this.stripe.paymentIntents.create(params, {
@@ -126,7 +125,7 @@ export class PaymentService implements IAbstractPaymentService {
             stripe_publishable_key: this.credentials.stripe_publishable_key,
             stripeAccount: this.credentials.stripe_user_id,
           }) as unknown as Prisma.InputJsonValue,
-          fee: 500,
+          fee: 0,
           refunded: false,
           success: false,
           paymentOption: paymentOption || "ON_BOOKING",
