@@ -99,6 +99,7 @@ export class PaymentService implements IAbstractPaymentService {
           eventTitle: eventTitle || "",
           bookingTitle: bookingTitle || "",
         },
+        application_fee_amount: 500,
       };
 
       const paymentIntent = await this.stripe.paymentIntents.create(params, {
@@ -125,7 +126,7 @@ export class PaymentService implements IAbstractPaymentService {
             stripe_publishable_key: this.credentials.stripe_publishable_key,
             stripeAccount: this.credentials.stripe_user_id,
           }) as unknown as Prisma.InputJsonValue,
-          fee: 0,
+          fee: 500,
           refunded: false,
           success: false,
           paymentOption: paymentOption || "ON_BOOKING",
@@ -171,6 +172,7 @@ export class PaymentService implements IAbstractPaymentService {
           bookingId,
           bookerPhoneNumber: bookerPhoneNumber ?? null,
         },
+        application_fee_amount: 500,
       };
 
       const setupIntent = await this.stripe.setupIntents.create(params, {
@@ -201,7 +203,7 @@ export class PaymentService implements IAbstractPaymentService {
               stripeAccount: this.credentials.stripe_user_id,
             }
           ) as unknown as Prisma.InputJsonValue,
-          fee: 0,
+          fee: 500,
           refunded: false,
           success: false,
           paymentOption: paymentOption || "ON_BOOKING",
@@ -262,7 +264,7 @@ export class PaymentService implements IAbstractPaymentService {
       const params = {
         amount: payment.amount,
         currency: payment.currency,
-        application_fee_amount: paymentFee,
+        application_fee_amount: 500,
         customer: setupIntent.customer as string,
         payment_method: setupIntent.payment_method as string,
         off_session: true,
