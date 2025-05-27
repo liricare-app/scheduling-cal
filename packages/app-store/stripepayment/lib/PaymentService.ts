@@ -172,7 +172,6 @@ export class PaymentService implements IAbstractPaymentService {
           bookingId,
           bookerPhoneNumber: bookerPhoneNumber ?? null,
         },
-        application_fee_amount: 500,
       };
 
       const setupIntent = await this.stripe.setupIntents.create(params, {
