@@ -23,7 +23,7 @@
     "translate-locales": "ts-node scripts/check-missing-translations.ts"
   },
   "engines": {
-    "node": "18",
+    "node": "24.x",
     "yarn": "3.4.1"
   },
   "dependencies": {
